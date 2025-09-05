@@ -1025,7 +1025,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "a2383a7a8205f7cae23b80c026c6e36a04c0d23bee3b3b2c6bc29b968ee669af",
+				"value": "",
 				"type": "string"
 			}
 		]
