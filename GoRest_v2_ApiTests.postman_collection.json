@@ -1,0 +1,1055 @@
+{
+	"info": {
+		"_postman_id": "970c6537-f0a2-4942-9c24-77b356137516",
+		"name": "GoRest v2 - ApiTests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10404786"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Users - GET - Positive",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"200 OK\", () => pm.response.to.have.status(200));\r",
+											"pm.test(\"Content-Type JSON\", () => pm.response.headers.get(\"Content-Type\").includes(\"application/json\"));\r",
+											"pm.test(\"Response time < 3000ms\", () => pm.expect(pm.response.responseTime).to.be.below(3000));\r",
+											"pm.test(\"Body is array\", () => {\r",
+											"  const b = pm.response.json();\r",
+											"  pm.expect(Array.isArray(b)).to.be.true;\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - GET - Negative - 404",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404 Resource not found\", () => pm.response.to.have.status(404));\r",
+											"\r",
+											"pm.test(\"Response Message Expected\", () => {\r",
+											"const responseJson = pm.response.json();\r",
+											"pm.expect(responseJson.message).to.eql(\"Resource not found\");\r",
+											"\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/users/0",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"0"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Users - POST - Positive",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"//We create new email every run to make sure it's not duplicated\r",
+											"\r",
+											"pm.environment.set(\"newUserEmail\", `axel.${Date.now()}@example.com`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"201 Created\", () => pm.response.to.have.status(201));\r",
+											"\r",
+											"const user = pm.response.json();\r",
+											"\r",
+											"// We save user's ID for next requests\r",
+											"pm.environment.set(\"userId\", user.id);\r",
+											"\r",
+											"// id and name validation\r",
+											"pm.test(\"Has numeric ID\", () => pm.expect(user.id).to.be.a(\"number\"));\r",
+											"pm.test(\"Retrieves name correctly\", () => pm.expect(user.name).to.eql(\"Axel Test\"));\r",
+											"\r",
+											"// schema validation\r",
+											"const schemaUser = {\r",
+											"  type: \"object\",\r",
+											"  required: [\"id\", \"name\", \"email\", \"gender\", \"status\"],\r",
+											"  properties: {\r",
+											"    id: { type: \"integer\" },\r",
+											"    name: { type: \"string\" },\r",
+											"    email: { type: \"string\" },\r",
+											"    gender: { type: \"string\" },\r",
+											"    status: { type: \"string\" }\r",
+											"  }\r",
+											"};\r",
+											"\r",
+											"pm.test(\"Schema válido (user)\", () => {\r",
+											"  pm.response.to.have.jsonSchema(schemaUser);\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Axel Test\",\r\n  \"gender\": \"male\",\r\n  \"email\": \"{{newUserEmail}}\",\r\n  \"status\": \"active\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - POST - Negative - EmailAlreadyExists",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"//We create new email every run to make sure it's not duplicated\r",
+											"\r",
+											"pm.environment.set(\"newUserEmail\", `axel.${Date.now()}@example.com`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 email already exists\", () => pm.response.to.have.status(422));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Axel Test\",\r\n  \"gender\": \"male\",\r\n  \"email\": \"{{createdUserEmail}}\",\r\n  \"status\": \"active\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - POST - Negative - NoAuth",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"//We create new email every run to make sure it's not duplicated\r",
+											"\r",
+											"pm.environment.set(\"newUserEmail\", `axel.${Date.now()}@example.com`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Authentincation Failed\", () => pm.response.to.have.status(401));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Axel Test\",\r\n  \"gender\": \"male\",\r\n  \"email\": \"{{newUserEmail}}\",\r\n  \"status\": \"active\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - POST - Negative - GenderNotValid",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"//We create new email every run to make sure it's not duplicated\r",
+											"\r",
+											"pm.environment.set(\"newUserEmail\", `axel.${Date.now()}@example.com`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 GenderNotValid\", () => pm.response.to.have.status(422));\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "\r\n{\r\n  \"name\": \"Axel Test\",\r\n  \"gender\": \"Unknown\",\r\n  \"email\": \"{{newUserEmail}}\",\r\n  \"status\": \"active\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - POST - Negative - StatusMissing",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"//We create new email every run to make sure it's not duplicated\r",
+											"\r",
+											"pm.environment.set(\"newUserEmail\", `axel.${Date.now()}@example.com`);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 Status Missing\", () => pm.response.to.have.status(422));"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "//We test sending an \"unknown\" gender, and blank status\r\n{\r\n  \"name\": \"Axel Test\",\r\n  \"gender\": \"Male\",\r\n  \"email\": \"{{newUserEmail}}\",\r\n  \"status\": \"\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PATCH",
+					"item": [
+						{
+							"name": "Users - PATCH - Postive - UpdateUserName",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"200 OK\", () => pm.response.to.have.status(200));\r",
+											"const u = pm.response.json();\r",
+											"pm.test(\"Name updated\", () => pm.expect(u.name).to.eql(\"Axel 2.0\"));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Axel 2.0\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - PATCH - Negative - MailNotValid",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 MailNotValid\", () => pm.response.to.have.status(422));\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"Not-valid-email.com\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Posts - GET - Positive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"200 OK\", () => pm.response.to.have.status(200));\r",
+											"pm.test(\"Body is an array\", () => pm.expect(Array.isArray(pm.response.json())).to.be.true);\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/posts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"posts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Posts - GET - Negative - 404",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404 Resource not found\", () => pm.response.to.have.status(404));\r",
+											"\r",
+											"pm.test(\"Response Message Expected\", () => {\r",
+											"const responseJson = pm.response.json();\r",
+											"pm.expect(responseJson.message).to.eql(\"Resource not found\");\r",
+											"\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/posts/0",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"posts",
+										"0"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Posts - POST - Positive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"201 Created\", () => pm.response.to.have.status(201));\r",
+											"const post = pm.response.json();\r",
+											"pm.environment.set(\"postId\", post.id);\r",
+											"\r",
+											"pm.test(\"Has numeric ID\", () => pm.expect(post.id).to.be.a(\"number\"));\r",
+											"pm.test(\"Title matches\", () => pm.expect(post.title).to.eql(\"My Post Title!\"));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"My Post Title!\",\r\n  \"body\": \"Post content :)\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/posts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"posts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Posts - POST - Negative - NoAuth",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Authentincation Failed\", () => pm.response.to.have.status(401));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"My Post Title!\",\r\n  \"body\": \"Post content :)\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/posts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"posts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Posts - POST - Negative - TitleMissing",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 Title Missing\", () => pm.response.to.have.status(422));"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"\",\r\n  \"body\": \"Post content :)\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/posts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"posts"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Todos",
+			"item": [
+				{
+					"name": "GET",
+					"item": [
+						{
+							"name": "Todos - GET - Positive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"200 OK\", () => pm.response.to.have.status(200));\r",
+											"const todos = pm.response.json();\r",
+											"pm.test(\"Is array\", () => pm.expect(Array.isArray(todos)).to.be.true);\r",
+											"\r",
+											"// counting status and saving into env vars\r",
+											"let completed = 0, pending = 0;\r",
+											"todos.forEach(t => {\r",
+											"  const s = (t.status || \"\").toLowerCase();\r",
+											"  if (s === \"completed\") completed++;\r",
+											"  if (s === \"pending\") pending++;\r",
+											"});\r",
+											"pm.environment.set(\"todos_completed\", completed);\r",
+											"pm.environment.set(\"todos_pending\", pending);\r",
+											"console.log(\"todos_completed:\", completed, \"todos_pending:\", pending);\r",
+											"\r",
+											"// JSON Schema validation\r",
+											"\r",
+											"const todosSchema = {\r",
+											"  type: \"array\",\r",
+											"  items: {\r",
+											"    type: \"object\",\r",
+											"    required: [\"id\",\"user_id\",\"title\",\"due_on\",\"status\"],\r",
+											"    properties: {\r",
+											"      id: {type:\"integer\"},\r",
+											"      user_id: {type:\"integer\"},\r",
+											"      title: {type:\"string\"},\r",
+											"      due_on: {type:\"string\"},\r",
+											"      status: {type:\"string\"}\r",
+											"    }\r",
+											"  }\r",
+											"};\r",
+											"\r",
+											"pm.test(\"Todos valid jsonSchema\", () => {\r",
+											"  pm.response.to.have.jsonSchema(todosSchema);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/todos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"todos"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Todos - GET - Negative - 404",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404 Resource not found\", () => pm.response.to.have.status(404));\r",
+											"\r",
+											"pm.test(\"Response Message Expected\", () => {\r",
+											"const responseJson = pm.response.json();\r",
+											"pm.expect(responseJson.message).to.eql(\"Resource not found\");\r",
+											"\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/todos/0",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"todos",
+										"0"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"item": [
+						{
+							"name": "Todos - POST - Positive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"201 Created\", () => pm.response.to.have.status(201));\r",
+											"const todo = pm.response.json();\r",
+											"pm.environment.set(\"todoId\", todo.id);\r",
+											"\r",
+											"pm.test(\"Has numeric ID\", () => pm.expect(todo.id).to.be.a(\"number\"));\r",
+											"pm.test(\"Has Peding Status\", () => pm.expect(todo.status).to.eql(\"pending\"));"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"Finish this challenge!\",\r\n  \"due_on\": \"2099-12-31T23:59:59.000+05:30\",\r\n  \"status\": \"pending\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/todos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"todos"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Todos - POST -  Negative - InvalidStatus",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"422 Invalid Status\", () => pm.response.to.have.status(422));"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"Finish this challenge!\",\r\n  \"due_on\": \"2099-12-31T23:59:59.000+05:30\",\r\n  \"status\": \"Unknown\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/todos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"todos"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Todos - POST - Negative - NoAuth",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Authentincation Failed\", () => pm.response.to.have.status(401));\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"title\": \"Finish this challenge!\",\r\n  \"due_on\": \"2099-12-31T23:59:59.000+05:30\",\r\n  \"status\": \"pending\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}/todos",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}",
+										"todos"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Users - DELETE",
+			"item": [
+				{
+					"name": "DELETE",
+					"item": [
+						{
+							"name": "Users - DELETE - Positive",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"204 No Content\", () => pm.response.to.have.status(204));\r",
+											"\r",
+											"// We can then try to fetch the user again to check if it was deleted"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Users - GET - CheckUserWasDeleted",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404 Resource not found\", () => pm.response.to.have.status(404));"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/users/{{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"{{userId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "a2383a7a8205f7cae23b80c026c6e36a04c0d23bee3b3b2c6bc29b968ee669af",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
