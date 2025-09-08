@@ -729,7 +729,7 @@
 											"      id: {type:\"integer\"},\r",
 											"      user_id: {type:\"integer\"},\r",
 											"      title: {type:\"string\"},\r",
-											"      due_on: {type:\"string\"},\r",
+											"      due_on: { type: [\"string\", \"null\"]},\r",
 											"      status: {type:\"string\"}\r",
 											"    }\r",
 											"  }\r",
@@ -1025,7 +1025,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "",
+				"value": "a2383a7a8205f7cae23b80c026c6e36a04c0d23bee3b3b2c6bc29b968ee669af",
 				"type": "string"
 			}
 		]
